@@ -219,23 +219,24 @@ RCT_EXPORT_METHOD(getCertificate:(nonnull NSNumber *)cId
 
 - (void)onConnect:(TcpSocketClient *)client {
     GCDAsyncSocket *socket = [client getSocket];
-    if([socket localPort] != nil && [socket connectedPort] != nil) {
-        [self sendEventWithName:@"connect"
-                           body:@{
-                               @"id" : client.id,
-                               @"connection" : @{
-                                   @"localAddress" : [socket localHost],
-                                   @"localPort" :
-                                       [NSNumber numberWithInt:[socket localPort]],
-                                   @"remoteAddress" : [socket connectedHost],
-                                   @"remotePort" : [NSNumber
-                                       numberWithInt:[socket connectedPort]],
-                                   @"remoteFamily" : [socket isIPv4] ? @"IPv4"
-                                                                     : @"IPv6"
-                               }
-                           }];
+    if (![socket localHost] || ![socket connectedHost]) {
+        RCTLogWarn(@"onConnect: nil host for socket id %@ (local=%@, remote=%@)",
+                   client.id, [socket localHost], [socket connectedHost]);
     }
-   
+    [self sendEventWithName:@"connect"
+                       body:@{
+                           @"id" : client.id,
+                           @"connection" : @{
+                               @"localAddress" : [socket localHost] ?: @"unknown",
+                               @"localPort" :
+                                   [NSNumber numberWithInt:[socket localPort]],
+                               @"remoteAddress" : [socket connectedHost] ?: @"unknown",
+                               @"remotePort" : [NSNumber
+                                   numberWithInt:[socket connectedPort]],
+                               @"remoteFamily" : [socket isIPv4] ? @"IPv4"
+                                                                 : @"IPv6"
+                           }
+                       }];
 }
 
 - (void)onListen:(TcpSocketClient *)server {
@@ -244,7 +245,7 @@ RCT_EXPORT_METHOD(getCertificate:(nonnull NSNumber *)cId
                        body:@{
                            @"id" : server.id,
                            @"connection" : @{
-                               @"localAddress" : [socket localHost],
+                               @"localAddress" : [socket localHost] ?: @"unknown",
                                @"localPort" :
                                    [NSNumber numberWithInt:[socket localPort]],
                                @"localFamily" : [socket isIPv4] ? @"IPv4"
@@ -281,10 +282,10 @@ RCT_EXPORT_METHOD(getCertificate:(nonnull NSNumber *)cId
                            @"info" : @{
                                @"id" : client.id,
                                @"connection" : @{
-                                   @"localAddress" : [socket localHost],
+                                   @"localAddress" : [socket localHost] ?: @"unknown",
                                    @"localPort" : [NSNumber
                                        numberWithInt:[socket localPort]],
-                                   @"remoteAddress" : [socket connectedHost],
+                                   @"remoteAddress" : [socket connectedHost] ?: @"unknown",
                                    @"remotePort" : [NSNumber
                                        numberWithInt:[socket connectedPort]],
                                    @"remoteFamily" : [socket isIPv4] ? @"IPv4"
